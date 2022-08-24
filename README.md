@@ -68,8 +68,21 @@ You will get all api's listed below:
 | Parameter | Type     | Description                       |
 | :-------- | :------- | :-------------------------------- |
 | `name`      | `string` | **Required**. Id of single space details to fetch |
-| `authorID`      | `string` | **Required**. authorID of single space details to fetch |
-| `image`      | `url` | **Required**. image of single space details to fetch |
-| `postion`      | `array` | **Required**. postion of single space details to fetch |
-| `rotation`      | `array` | **Required**. rotation of single space details to fetch |
-| `scale`      | `array` | **Required**. scale of single space details to fetch |
+| `authorID`  | `string` | **Required**. authorID of single space details to fetch |
+| `image`     | `url` | **Required**. image of single space details to fetch |
+
+#### Add modal in space
+
+```http
+  POST /api/addSpace
+```
+
+| Parameter | Type     | Description                       |
+| :-------- | :------- | :-------------------------------- |
+| `name`      | `string` | **Required**. Id of single space details to add |
+| `spaceID`  | `string` | **Required**. spaceID of single space details to add |
+| `authorID`  | `string` | **Required**. authorID of single space details to add |
+| `position`     | `array` | **Required**. position of single space details to add |
+| `rotation`     | `array` | **Required**. rotation of single space details to add |
+| `scale`     | `array` | **Required**. scale of single space details to add |
+| `model`     | `GLB` | **Required**. 3d Model in GLB format of single space details to add minimum 15 mb |
