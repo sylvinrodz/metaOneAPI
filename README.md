@@ -48,17 +48,28 @@ You will get all api's listed below:
 | :-------- | :------- | :-------------------------------- |
 | `id`      | `string` | **Required**. Id of single space details to fetch |
 
+#### Update space by id
+
+```http
+  PUT /api/space/${id}
+```
+
+| Parameter | Type     | Description                       |
+| :-------- | :------- | :-------------------------------- |
+| `id`      | `string` | **Required**. Id of single space details to fetch |
+| `data`    | `array` | **Required**. Data of single space details to fetch |
+
 #### Add space
 
 ```http
-  POST /api/space
+  POST /api/addSpace
 ```
 
 | Parameter | Type     | Description                       |
 | :-------- | :------- | :-------------------------------- |
 | `name`      | `string` | **Required**. Id of single space details to fetch |
-| `authorID`      | `string` | **Required**. Id of single space details to fetch |
-| `image`      | `url` | **Required**. Id of single space details to fetch |
-| `postion`      | `array` | **Required**. Id of single space details to fetch |
-| `rotation`      | `array` | **Required**. Id of single space details to fetch |
-| `scale`      | `array` | **Required**. Id of single space details to fetch |
+| `authorID`      | `string` | **Required**. authorID of single space details to fetch |
+| `image`      | `url` | **Required**. image of single space details to fetch |
+| `postion`      | `array` | **Required**. postion of single space details to fetch |
+| `rotation`      | `array` | **Required**. rotation of single space details to fetch |
+| `scale`      | `array` | **Required**. scale of single space details to fetch |
