@@ -9,7 +9,6 @@ const Busboy = require("busboy");
 const os = require("os");
 const path = require("path");
 const fs = require("fs");
-const FileType = require('file-type');
 const serviceAccount = require('./metaone-ec336-firebase-adminsdk-or3sd-58e3b79ec1.json');
 
 initializeApp({
@@ -110,7 +109,12 @@ app.post('/upload', function(req, res) {
         const busboy = new Busboy({ headers: req.headers });
         let uploadData = null;
         busboy.on("file", (fieldname, file, filename, encoding, mimetype) => {
-
+          const myArray = filename.split(".");
+          if(myArray[myArray.length - 1] != "glb"){
+            return  res.status(500).json({
+              error: "only GLB file allowed!"
+            });
+          }
             const filepath = path.join(os.tmpdir(), filename);
             uploadData = { file: filepath, type: mimetype };
             file.pipe(fs.createWriteStream(filepath));
@@ -124,13 +128,7 @@ app.post('/upload', function(req, res) {
 
           busboy.on("finish", async() => {
           const uid = uuidv4();
-          console.log(JSON.parse(formData.get('position')))
-          await admin.firestore().collection("spacesObjects").add({name: formData.get('name'), postion: [JSON.parse(formData.get('position'))] ,object:"img_url" ,spaceID:formData.get('spaceId')});
-          res.status(200).json({
-            message: "object added",
-            data:img_url
-          });
-          return;
+         
             bucket
               .upload(uploadData.file, {
                 uploadType: "media",
@@ -142,8 +140,7 @@ app.post('/upload', function(req, res) {
                 }
               })
               .then(async(signedUrls ) => {
-                console.log(JSON.parse(formData.get('position')))
-                return
+                
                 const img_url = "https://firebasestorage.googleapis.com/v0/b/" + bucket.name + "/o/" + encodeURIComponent(signedUrls[0].name) + "?alt=media&token=" + uid;
                 await admin.firestore().collection("spacesObjects").add({name: formData.get('name'), postion: JSON.parse(formData.get('position')) ,object:img_url ,spaceID:formData.get('spaceId')});
                 res.status(200).json({
@@ -160,59 +157,7 @@ app.post('/upload', function(req, res) {
           busboy.end(req.rawBody);
     })
  });
- app.post('/somewhere', (req, res) => {
-    cors(req, res, () => {
-      const bb = new Busboy({ headers: req.headers });
-      let uploadData = null;
-      bb.on('file', async(name, file, filename, encoding, mimeType) => {
-        
-const myArray = filename.split(".");
-if(myArray[myArray.length - 1] != "glb"){
-  return  res.status(500).json({
-    error: "only GLB file allowed!"
-  });
-}
-// const filepath = path.join(os.tmpdir(), filename);
-//         uploadData = { file: filepath, type: mimetype };
-//         file.pipe(fs.createWriteStream(filepath));
-        // console.log(
-        //   `File [${name}]: filename: %j, encoding: %j, mimeType: %j`,
-        //   filename,
-        //   encoding,
-        //   mimeType
-        // );
-        // file.on('data', (data) => {
-        //   if(data.length > 10485760){
-        //     return  res.status(500).json({
-        //       message: "only 10 MB GLB file allowed!"
-        //     });
-        //   }
-        //   console.log(`File [${name}] got ${data.length} bytes`);
-        // }).on('close', () => {
-        //   console.log(`File [${name}] done`);
-        // });
-      });
-      let formData = new Map();
 
-      bb.on('field', (fieldname, val) => {
-        formData.set(fieldname, val);
-      });
-    bb.on("finish", () => {
-      let data = {
-        name : formData.get('name'),
-        postion : formData.get('postion'),
-        spaceId: formData.get('spaceId')
-      }
-      return res.status(200).json({
-        message: "It worked!",
-        data:data
-      });
-     
-     
-    });
-    bb.end(req.rawBody);
-});
-  });
 exports.api = region.https.onRequest(app);
 
 exports.userRegister = region.auth.user().onCreate(async(user) => {

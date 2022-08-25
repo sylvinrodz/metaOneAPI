@@ -74,7 +74,7 @@ You will get all api's listed below:
 #### Add modal in space
 
 ```http
-  POST /api/addSpace
+  POST /api/addSpaceObject
 ```
 
 | Parameter | Type     | Description                       |
