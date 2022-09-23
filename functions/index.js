@@ -11,6 +11,9 @@ const path = require("path");
 const fs = require("fs");
 const serviceAccount = require('./metaone-ec336-firebase-adminsdk-or3sd-58e3b79ec1.json');
 
+//to convert files into images
+var convertapi = require('convertapi')('be9ArnZsDViI9ibr');
+
 initializeApp({
   credential: cert(serviceAccount),
   storageBucket: 'metaone-ec336.appspot.com'
@@ -31,7 +34,8 @@ app.use(cors);
 //   callback(null, corsOptions) // callback expects two parameters: error and options
 // }
 
-
+// Login Api
+//Get All users
 app.get('/logins',async (req,res)=>{
     const snapshot = await admin.firestore().collection("users").get();
 
@@ -45,6 +49,7 @@ app.get('/logins',async (req,res)=>{
     res.status(200).send(JSON.stringify(users));
 });
 
+//Get Single user by ID
 app.get("/login/:id",async (req,res)=>{
     const snapshot = await admin.firestore().collection("users").doc(req.params.id).get();
 
@@ -54,31 +59,46 @@ app.get("/login/:id",async (req,res)=>{
     res.status(200).send(JSON.stringify({id:userId, ...userData}));
 })
 
-app.get('/spaces',async (req,res)=>{
-    const snapshot = await admin.firestore().collection("spaces").get();
+// Spaces (particular User)
+app.get('/spaces/:userID/:limit/:lastName',async (req,res)=>{
+  let limit = parseInt(req.params.limit)
+     const snapshot = await admin.firestore().collection("spaces").where("userID","==", req.params.userID).orderBy("name").startAfter(req.params.lastName).limit(limit).get();
 
     let spaces = [];
     snapshot.forEach(doc =>{
         let id = doc.id;
         let data = doc.data();
-
+       
         spaces.push({id,...data});
     })
-    res.status(200).send(JSON.stringify(spaces));
+     res.status(200).send(JSON.stringify(spaces));
 });
+
+//serch spaces
+app.get('/serchSpaces/:userID/:name',async (req,res)=>{
+  let name = req.params.name.toString();
+     const snapshot = await admin.firestore().collection("spaces").where("userID","==", req.params.userID).get();
+
+    let spaces = [];
+    snapshot.forEach(doc =>{
+        let id = doc.id;
+        let data = doc.data();
+       if(data.name.includes(name)){
+        spaces.push({id,...data});
+       }
+       
+    })
+     res.status(200).send(JSON.stringify(spaces));
+});
+
+
+
 
 app.post("/addSpace",async (req,res)=>{
     const space = req.body;
     const name = req.body.name;
     await admin.firestore().collection("spaces").add(space);
     res.status(200).send(space.name + " added");
-})
-
-app.post("/addItemInSpace",async (req,res)=>{
-    const space = req.body;
-   
-    await admin.firestore().collection("spaces").doc(space.id).add(space);
-    res.status(200).send("Item added");
 })
 
 app.get("/space/:id",async (req,res)=>{
@@ -104,8 +124,70 @@ app.put("/spaces/:id",async (req,res)=>{
     res.status(200).send(req.params.id + " updated");
 })
 
-app.post('/upload', function(req, res) {
-    cors(req, res, () => {
+
+//New Default Spaces
+app.get('/newSpaces/:limit/:lastName',async (req,res)=>{
+  let limit = parseInt(req.params.limit)
+  const snapshot = await admin.firestore().collection("demoSpace").orderBy("name").startAfter(req.params.lastName).limit(limit).get();
+
+ let spaces = [];
+ snapshot.forEach(doc =>{
+     let id = doc.id;
+     let data = doc.data();
+    
+     spaces.push({id,...data});
+ })
+  res.status(200).send(JSON.stringify(spaces));
+});
+
+
+app.post("/addnewSpacesInUser",async (req,res)=>{
+  const newSpacesID = req.body.newSpacesID;
+  const userID = req.body.userID;
+
+  // get user Data
+  const usersSpace = await admin.firestore().collection("users").doc(userID).get();
+
+  // get new Space Data
+ const newSpaces = await admin.firestore().collection("demoSpace").doc(newSpacesID).get();
+    const newSpacesData = {newSpacesID,...newSpaces.data()};
+    newSpacesData.name = usersSpace.data().displayName + " " + newSpacesData.name;
+    const d = {author:usersSpace.data().displayName,...newSpacesData}
+
+    //add new space to spaces
+    const sdata =await admin.firestore().collection("spaces").add({userID,...d});
+    
+    // get models from new space
+   const newSpacesObjects = await admin.firestore().collection("demoSpaceModel").where("spaceID","==",newSpacesID).get();
+
+   newSpacesObjects.forEach(doc =>{
+       let id = doc.id;
+       let data = doc.data();
+       let concat = {id,...data};
+        concat.spaceID = sdata.id;
+       
+      // add newspacemodels to space modals
+       admin.firestore().collection("modals").add(concat)
+      
+   })
+  res.status(200).send("new space added in "+ usersSpace.data().displayName + " as " + newSpacesData.name);
+})
+
+app.get("/getSpaceObjects/:spaceID/:SpaceType",async (req,res)=>{
+   const snapshot = await admin.firestore().collection("modals").where("spaceID", "==" ,req.params.id).get();
+
+  let spaces = [];
+    snapshot.forEach(doc =>{
+        let id = doc.id;
+        let data = doc.data();
+
+        spaces.push({id,...data});
+    })
+    res.status(200).send(JSON.stringify(spaces));
+})
+app.post('/addSpaceObject', (req, res) => {
+    cors(req, res, async() => {
+     
         const busboy = new Busboy({ headers: req.headers });
         let uploadData = null;
         busboy.on("file", (fieldname, file, filename, encoding, mimetype) => {
@@ -127,7 +209,9 @@ app.post('/upload', function(req, res) {
           });
 
           busboy.on("finish", async() => {
-          const uid = uuidv4();
+          const spaceData = await admin.firestore().collection("spaces").doc(formData.get('spaceId')).get();
+          if(spaceData.exists){
+            const uid = uuidv4();
          
             bucket
               .upload(uploadData.file, {
@@ -142,10 +226,10 @@ app.post('/upload', function(req, res) {
               .then(async(signedUrls ) => {
                 
                 const img_url = "https://firebasestorage.googleapis.com/v0/b/" + bucket.name + "/o/" + encodeURIComponent(signedUrls[0].name) + "?alt=media&token=" + uid;
-                await admin.firestore().collection("spacesObjects").add({name: formData.get('name'), postion: JSON.parse(formData.get('position')) ,object:img_url ,spaceID:formData.get('spaceId')});
+                await admin.firestore().collection("modals").add({name: formData.get('name'), postion: JSON.parse(formData.get('position')),rotation: JSON.parse(formData.get('rotation')),scale: JSON.parse(formData.get('scale')) ,url:img_url ,spaceID:formData.get('spaceId')});
                 res.status(200).json({
                   message: "object added",
-                  data:img_url
+                  url:img_url
                 });
               })
               .catch(err => {
@@ -153,22 +237,48 @@ app.post('/upload', function(req, res) {
                   error: err
                 });
               });
+          }else{
+            res.status(500).json({
+              error: "space Id not exist"
+            });
+          }
+          
           });
           busboy.end(req.rawBody);
     })
  });
 
+ app.post('/convert', (req,res)=>{
+  const busboy = new Busboy({ headers: req.headers });
+  let uploadData = null;
+  
+  busboy.on("file", (fieldname, file, filename, encoding, mimetype) => {
+   
+  
+      const filepath = path.join(os.tmpdir(), filename);
+      uploadData = { file: filepath, type: mimetype };
+      file.pipe(fs.createWriteStream(filepath));
+
+
+    });
+    busboy.on("finish", async() => {
+        convertapi.convert('jpg', { File: uploadData.file })
+  .then((result)=> {
+    
+    res.status(200).send(result.file.url);
+  })
+  .catch((e) =>{
+    res.status(500).send(e.toString());
+  });
+        
+       
+      });
+      busboy.end(req.rawBody);
+
+});
 exports.api = region.https.onRequest(app);
 
-exports.userRegister = region.auth.user().onCreate(async(user) => {
-    const email = user.email; // The email of the user.
-    const displayName = user.displayName; // The display name of the user.
-    const uid = user.uid; 
-    const d = {
-        email,displayName,uid
-    }
-    await admin.firestore().collection("users").add(d);
-  });
+
 
 
  

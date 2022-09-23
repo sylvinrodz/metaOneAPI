@@ -1,88 +1,110 @@
 
-# Meta One By Skilliza
-
-You will get all api's listed below:
-
-
 ## API Reference
 
+#### Main API base URL
+```http
+https://asia-south1-metaone-ec336.cloudfunctions.net/api
+```
+## Login
 #### Get All login 
 
 ```http
-  GET /api/logins
+  GET /logins
 ```
+- To get all the users data
+
 
 #### Get login by id
 
 ```http
-  GET /api/login/${id}
+  GET /login/:id
 ```
 
 | Parameter | Type     | Description                       |
 | :-------- | :------- | :-------------------------------- |
-| `id`      | `string` | **Required**. Id of single login details to fetch |
+| `id`      | `string` | **Required**. ID of the user      |
+
+- To get single user data by ID
+
+## Spaces (User Based)
 
 #### Get All Space 
 
 ```http
-  GET /api/spaces
+  GET /spaces/:userID/:limit/:lastName
 ```
+
+| Parameter | Type     | Description                  |
+| :-------- | :------- | :-------------------------   |
+| `userID` | `string` | **Required**. ID of the user  |
+| `limit` | `string` | **Required**. number of spaces |
+| `lastName` | `string` | **Required**. name of the last space |
+
+- To get spaces of the user by userID
+
+#### Search Space by name 
+
+```http
+  GET /serchSpaces/:userID/:name
+```
+
+| Parameter | Type     | Description                  |
+| :-------- | :------- | :-------------------------   |
+| `userID` | `string` | **Required**. ID of the user  |
+| `name` | `string` | **Required**. Search Text (name) |
+
+- To serach spaces by name
 
 #### Get space by id
 
 ```http
-  GET /api/space/${id}
+  GET /api/space/:id
 ```
 
 | Parameter | Type     | Description                       |
 | :-------- | :------- | :-------------------------------- |
-| `id`      | `string` | **Required**. Id of single space details to fetch |
+| `id`      | `string` | **Required**. SpaceId of single space details to fetch |
 
-#### Delete space by id
+- To get single space data by Space ID
+
+## Spaces (New Spaces)(Pre-Added)
+
+#### Get All Space 
 
 ```http
-  DELETE /api/space/${id}
+  GET /newSpaces/:limit/:lastName
 ```
 
-| Parameter | Type     | Description                       |
-| :-------- | :------- | :-------------------------------- |
-| `id`      | `string` | **Required**. Id of single space details to fetch |
+| Parameter | Type     | Description                  |
+| :-------- | :------- | :-------------------------   |
+| `limit` | `string` | **Required**. number of spaces |
+| `lastName` | `string` | **Required**. name of the last space |
 
-#### Update space by id
+- To get all spaces added by Admin(Skilliza)
+
+#### Add new space in user spaces 
 
 ```http
-  PUT /api/space/${id}
+  POST /addnewSpacesInUser
 ```
 
-| Parameter | Type     | Description                       |
-| :-------- | :------- | :-------------------------------- |
-| `id`      | `string` | **Required**. Id of single space details to fetch |
-| `data`    | `array` | **Required**. Data of single space details to fetch |
+| Parameter | Type     | Description                  |
+| :-------- | :------- | :-------------------------   |
+| `newSpacesID` | `string` | **Required**.ID of the New Spaces |
+| `userID` | `string` | **Required**. ID of the user |
 
-#### Add space
+- To add spaces added by Admin(Skilliza) to spaces (user based)
+
+
+## Spaces (3d Models)(unity)
 
 ```http
-  POST /api/addSpace
+  GET /getSpaceObjects/:spaceID/:SpaceType
 ```
 
-| Parameter | Type     | Description                       |
-| :-------- | :------- | :-------------------------------- |
-| `name`      | `string` | **Required**. Id of single space details to fetch |
-| `authorID`  | `string` | **Required**. authorID of single space details to fetch |
-| `image`     | `url` | **Required**. image of single space details to fetch |
+| Parameter | Type     | Description                  |
+| :-------- | :------- | :-------------------------   |
+| `spaceID` | `string` | **Required**. ID of spaces |
+| `SpaceType` | `string` | **Required**. type of space (Explor,spaces) |
 
-#### Add modal in space
-
-```http
-  POST /api/addSpaceObject
-```
-
-| Parameter | Type     | Description                       |
-| :-------- | :------- | :-------------------------------- |
-| `name`      | `string` | **Required**. Id of single space details to add |
-| `spaceID`  | `string` | **Required**. spaceID of single space details to add |
-| `authorID`  | `string` | **Required**. authorID of single space details to add |
-| `position`     | `array` | **Required**. position of single space details to add |
-| `rotation`     | `array` | **Required**. rotation of single space details to add |
-| `scale`     | `array` | **Required**. scale of single space details to add |
-| `model`     | `GLB` | **Required**. 3d Model in GLB format of single space details to add minimum 15 mb |
+- To get 3d models of particular space
