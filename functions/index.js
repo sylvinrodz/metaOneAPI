@@ -141,6 +141,7 @@ app.get('/newSpaces/:limit/:lastName',async (req,res)=>{
 });
 
 
+
 app.post("/addnewSpacesInUser",async (req,res)=>{
   const newSpacesID = req.body.newSpacesID;
   const userID = req.body.userID;
@@ -170,11 +171,16 @@ app.post("/addnewSpacesInUser",async (req,res)=>{
        admin.firestore().collection("modals").add(concat)
       
    })
-  res.status(200).send("new space added in "+ usersSpace.data().displayName + " as " + newSpacesData.name);
+   
+   res.status(200).json({
+    message:"new space added in "+ usersSpace.data().displayName + " as " + newSpacesData.name,
+    id:sdata.id
+  });
 })
 
 app.get("/getSpaceObjects/:spaceID/:SpaceType",async (req,res)=>{
-   const snapshot = await admin.firestore().collection("modals").where("spaceID", "==" ,req.params.id).get();
+  // res.status(200).send(JSON.stringify(req.params.spaceID));
+   const snapshot = await admin.firestore().collection("modals").where("spaceID", "==" ,req.params.spaceID).get();
 
   let spaces = [];
     snapshot.forEach(doc =>{
@@ -185,6 +191,93 @@ app.get("/getSpaceObjects/:spaceID/:SpaceType",async (req,res)=>{
     })
     res.status(200).send(JSON.stringify(spaces));
 })
+app.get("/getSpaceFiles/:spaceID/:SpaceType",async (req,res)=>{
+   const snapshot = await admin.firestore().collection("files").where("spaceID", "==" ,req.params.spaceID).get();
+
+  let spaces = [];
+    snapshot.forEach(doc =>{
+        let id = doc.id;
+        let data = doc.data();
+
+        spaces.push({id,...data});
+    })
+    res.status(200).send(JSON.stringify(spaces));
+})
+app.get("/getSpaceMainObject/:spaceID/:SpaceType",async (req,res)=>{
+   const snapshot = await admin.firestore().collection("mainModals").where("spaceID", "==" ,req.params.spaceID).get();
+
+  let spaces = [];
+    snapshot.forEach(doc =>{
+        let id = doc.id;
+        let data = doc.data();
+
+        spaces.push({id,...data});
+    })
+    res.status(200).send(JSON.stringify(spaces));
+})
+app.post('/addSpaceFiles', (req, res) => {
+  cors(req, res, async() => {
+   
+      const busboy = new Busboy({ headers: req.headers });
+      let uploadData = null;
+      busboy.on("file", (fieldname, file, filename, encoding, mimetype) => {
+     
+          const filepath = path.join(os.tmpdir(), filename);
+          uploadData = { file: filepath, type: mimetype };
+          file.pipe(fs.createWriteStream(filepath));
+          
+        });
+        let formData = new Map();
+
+        busboy.on('field', (fieldname, val) => {
+          formData.set(fieldname, val);
+        });
+
+        busboy.on("finish", async() => {
+          
+        const spaceData = await admin.firestore().collection("spaces").doc(formData.get('spaceId')).get();
+      
+        if(spaceData.exists){
+          const uid = uuidv4();
+       
+          bucket
+            .upload(uploadData.file, {
+              uploadType: "media",
+              metadata: {
+                metadata: {
+                  contentType: uploadData.type,
+                  firebaseStorageDownloadTokens: uid
+                }
+              }
+            })
+            .then(async(signedUrls ) => {
+              const uid = uuidv4();
+              const img_url = "https://firebasestorage.googleapis.com/v0/b/" + bucket.name + "/o/" + encodeURIComponent(signedUrls[0].name) + "?alt=media&token=" + uid;
+              await admin.firestore().collection("files").doc(uid).set({id:uid,name: formData.get('name'), postion: formData.get('position'),rotation: formData.get('rotation'),scale: formData.get('scale') ,url:img_url ,spaceID:formData.get('spaceId')});
+
+              res.status(200).json({
+                message: "file added",
+                url:img_url,
+                id:uid
+              });
+              
+            })
+            .catch(err => {
+              res.status(500).json({
+                error: err
+              });
+            });
+        }else{
+          res.status(500).json({
+            error: "space Id not exist"
+          });
+        }
+        
+        });
+        busboy.end(req.rawBody);
+  })
+});
+
 app.post('/addSpaceObject', (req, res) => {
     cors(req, res, async() => {
      
@@ -209,7 +302,9 @@ app.post('/addSpaceObject', (req, res) => {
           });
 
           busboy.on("finish", async() => {
+            
           const spaceData = await admin.firestore().collection("spaces").doc(formData.get('spaceId')).get();
+        
           if(spaceData.exists){
             const uid = uuidv4();
          
@@ -224,13 +319,15 @@ app.post('/addSpaceObject', (req, res) => {
                 }
               })
               .then(async(signedUrls ) => {
-                
+              
                 const img_url = "https://firebasestorage.googleapis.com/v0/b/" + bucket.name + "/o/" + encodeURIComponent(signedUrls[0].name) + "?alt=media&token=" + uid;
-                await admin.firestore().collection("modals").add({name: formData.get('name'), postion: JSON.parse(formData.get('position')),rotation: JSON.parse(formData.get('rotation')),scale: JSON.parse(formData.get('scale')) ,url:img_url ,spaceID:formData.get('spaceId')});
+                await admin.firestore().collection("modals").add({name: formData.get('name'), postion: formData.get('position'),rotation: formData.get('rotation'),scale: formData.get('scale') ,url:img_url ,spaceID:formData.get('spaceId')});
+
                 res.status(200).json({
                   message: "object added",
                   url:img_url
                 });
+                
               })
               .catch(err => {
                 res.status(500).json({
@@ -248,34 +345,7 @@ app.post('/addSpaceObject', (req, res) => {
     })
  });
 
- app.post('/convert', (req,res)=>{
-  const busboy = new Busboy({ headers: req.headers });
-  let uploadData = null;
-  
-  busboy.on("file", (fieldname, file, filename, encoding, mimetype) => {
-   
-  
-      const filepath = path.join(os.tmpdir(), filename);
-      uploadData = { file: filepath, type: mimetype };
-      file.pipe(fs.createWriteStream(filepath));
 
-
-    });
-    busboy.on("finish", async() => {
-        convertapi.convert('jpg', { File: uploadData.file })
-  .then((result)=> {
-    
-    res.status(200).send(result.file.url);
-  })
-  .catch((e) =>{
-    res.status(500).send(e.toString());
-  });
-        
-       
-      });
-      busboy.end(req.rawBody);
-
-});
 exports.api = region.https.onRequest(app);
 
 

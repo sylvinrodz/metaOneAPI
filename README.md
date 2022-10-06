@@ -98,8 +98,33 @@ https://asia-south1-metaone-ec336.cloudfunctions.net/api
 
 ## Spaces (3d Models)(unity)
 
+#### All Models
 ```http
   GET /getSpaceObjects/:spaceID/:SpaceType
+```
+
+| Parameter | Type     | Description                  |
+| :-------- | :------- | :-------------------------   |
+| `spaceID` | `string` | **Required**. ID of spaces |
+| `SpaceType` | `string` | **Required**. type of space (Explor,spaces) |
+
+- To get 3d models of particular space
+
+#### Main Model
+```http
+  GET /getSpaceMainObject/:spaceID/:SpaceType
+```
+
+| Parameter | Type     | Description                  |
+| :-------- | :------- | :-------------------------   |
+| `spaceID` | `string` | **Required**. ID of spaces |
+| `SpaceType` | `string` | **Required**. type of space (Explor,spaces) |
+
+- To get 3d models of particular space
+
+## Spaces (Files)(images,videos)(unity)
+```http
+  GET /getSpaceFiles/:spaceID/:SpaceType
 ```
 
 | Parameter | Type     | Description                  |
