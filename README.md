@@ -110,6 +110,19 @@ https://asia-south1-metaone-ec336.cloudfunctions.net/api
 
 - To get 3d models of particular space
 
+#### All Models move
+```http
+  POST /moveSpaceObject
+```
+
+| Parameter | Type     | Description                  |
+| :-------- | :------- | :-------------------------   |
+| `modalID` | `string` | **Required**. ID of model |
+| `position` | `string` | **Required**. position of model |
+| `rotation` | `string` | **Required**. rotation of model |
+| `scale` | `string` | **Required**. scale of model |
+- To get 3d models of particular space
+
 #### Main Model
 ```http
   GET /getSpaceMainObject/:spaceID/:SpaceType

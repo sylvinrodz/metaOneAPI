@@ -191,6 +191,25 @@ app.get("/getSpaceObjects/:spaceID/:SpaceType",async (req,res)=>{
     })
     res.status(200).send(JSON.stringify(spaces));
 })
+app.post("/moveSpaceObject",async (req,res)=>{
+  const position = req.body.position;
+  const rotation = req.body.rotation;
+  const scale = req.body.scale;
+  const modalID = req.body.modalID;
+ await admin.firestore().collection("modals").doc(modalID).update({
+    position:position,
+    rotation:rotation,
+    scale:scale
+  }).then(()=>{
+    res.status(200).send(modalID+ " is updated");
+  }).catch((err)=>{
+    res.status(500).send(err);
+  });
+
+  
+   
+
+})
 app.get("/getSpaceFiles/:spaceID/:SpaceType",async (req,res)=>{
    const snapshot = await admin.firestore().collection("files").where("spaceID", "==" ,req.params.spaceID).get();
 
@@ -204,7 +223,7 @@ app.get("/getSpaceFiles/:spaceID/:SpaceType",async (req,res)=>{
     res.status(200).send(JSON.stringify(spaces));
 })
 app.get("/getSpaceMainObject/:spaceID/:SpaceType",async (req,res)=>{
-   const snapshot = await admin.firestore().collection("mainModals").where("spaceID", "==" ,req.params.spaceID).get();
+   const snapshot = await admin.firestore().collection("BaseModel").where("spaceID", "==" ,req.params.spaceID).get();
 
   let spaces = [];
     snapshot.forEach(doc =>{
