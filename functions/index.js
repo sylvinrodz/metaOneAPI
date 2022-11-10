@@ -59,6 +59,31 @@ app.get("/login/:id",async (req,res)=>{
     res.status(200).send(JSON.stringify({id:userId, ...userData}));
 })
 
+app.post("saveAvatar", async (req,res)=>{
+  const data = rew.body;
+  const snapshot = await admin.firestore().collection("avtars").doc(req.body.userID).get();
+  if(snapshot.exists){
+    await admin.firestore().collection("avtars").doc(req.body.userID).update(data);
+    res.status(200).send(req.body.userID + " updated");
+  }else{
+    await admin.firestore().collection("avtars").doc(req.body.userID).add(data);
+    res.status(200).send(req.body.userID + " added");
+  }
+
+})
+
+app.get("/getAvtar/:userID",async (req,res)=>{
+  const snapshot = await admin.firestore().collection("avtars").doc(req.params.userID).get();
+if(snapshot.exists){
+  const userId = snapshot.id;
+  const avtarData = snapshot.data();
+
+  res.status(200).send({id:userId, ...avtarData,status:true});
+}else{
+  res.status(500).send({Message:"no data found",status:false});
+}
+  
+})
 // Spaces (particular User)
 app.get('/spaces/:userID/:limit/:lastName',async (req,res)=>{
   let limit = parseInt(req.params.limit)
@@ -192,12 +217,17 @@ app.get("/getSpaceObjects/:spaceID/:SpaceType",async (req,res)=>{
     res.status(200).send(JSON.stringify(spaces));
 })
 app.post("/moveSpaceObject",async (req,res)=>{
-  const position = req.body.position;
+
+  const posX = req.body.posX;
+  const posY = req.body.posY;
+  const posZ = req.body.posZ;
   const rotation = req.body.rotation;
   const scale = req.body.scale;
   const modalID = req.body.modalID;
  await admin.firestore().collection("modals").doc(modalID).update({
-    position:position,
+  posX:posX,
+  posY:posY,
+  posZ:posZ,
     rotation:rotation,
     scale:scale
   }).then(()=>{

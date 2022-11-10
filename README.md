@@ -26,6 +26,30 @@ https://asia-south1-metaone-ec336.cloudfunctions.net/api
 
 - To get single user data by ID
 
+## Avtar (Save Avtar)
+
+
+```http
+  POST /saveAvatar
+```
+
+| Parameter | Type     | Description                       |
+| :-------- | :------- | :-------------------------------- |
+| `userID`      | `string` | **Required**. ID of the user  |
+| `Data`      | `string` | **Required**. Add all your data points  |
+
+- To save user Avtar
+
+```http
+  GET /getAvtar/:userID
+```
+
+| Parameter | Type     | Description                       |
+| :-------- | :------- | :-------------------------------- |
+| `userID`      | `string` | **Required**. ID of the user      |
+
+- To get single user Avtar by userID
+
 ## Spaces (User Based)
 
 #### Get All Space 
