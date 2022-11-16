@@ -59,20 +59,21 @@ app.get("/login/:id",async (req,res)=>{
     res.status(200).send(JSON.stringify({id:userId, ...userData}));
 })
 
-app.post("saveAvatar", async (req,res)=>{
-  const data = rew.body;
-  const snapshot = await admin.firestore().collection("avtars").doc(req.body.userID).get();
+app.post("/saveAvatar", async (req,res)=>{
+   const data = req.body;
+   const snapshot = await admin.firestore().collection("avtars").doc(req.body.userID).get();
   if(snapshot.exists){
     await admin.firestore().collection("avtars").doc(req.body.userID).update(data);
     res.status(200).send(req.body.userID + " updated");
   }else{
-    await admin.firestore().collection("avtars").doc(req.body.userID).add(data);
+    await admin.firestore().collection("avtars").doc(req.body.userID).set(data);
     res.status(200).send(req.body.userID + " added");
   }
 
 })
 
 app.get("/getAvtar/:userID",async (req,res)=>{
+  console.log(req.params.userID)
   const snapshot = await admin.firestore().collection("avtars").doc(req.params.userID).get();
 if(snapshot.exists){
   const userId = snapshot.id;
@@ -370,11 +371,12 @@ app.post('/addSpaceObject', (req, res) => {
               .then(async(signedUrls ) => {
               
                 const img_url = "https://firebasestorage.googleapis.com/v0/b/" + bucket.name + "/o/" + encodeURIComponent(signedUrls[0].name) + "?alt=media&token=" + uid;
-                await admin.firestore().collection("modals").add({name: formData.get('name'), postion: formData.get('position'),rotation: formData.get('rotation'),scale: formData.get('scale') ,url:img_url ,spaceID:formData.get('spaceId')});
-
+                await admin.firestore().collection("modals").doc(uid).set({name: formData.get('name'), postion: formData.get('position'),rotation: formData.get('rotation'),scale: formData.get('scale') ,url:img_url ,spaceID:formData.get('spaceId'),id:uid});
+                
                 res.status(200).json({
                   message: "object added",
-                  url:img_url
+                  url:img_url,
+                  id:uid
                 });
                 
               })
