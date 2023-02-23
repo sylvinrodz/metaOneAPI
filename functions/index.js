@@ -116,8 +116,18 @@ app.get('/serchSpaces/:userID/:name',async (req,res)=>{
     })
      res.status(200).send(JSON.stringify(spaces));
 });
+app.get("/getstoreData",async (req,res)=>{
+  const snapshot = await admin.firestore().collection("chirag").doc(req.params.id).get();
 
+  const spaceId = snapshot.id;
+  const spaceData = snapshot.data();
 
+  res.status(200).send(JSON.stringify(spaceData));
+})
+app.get("/storeData/:id",async (req,res)=>{
+  await admin.firestore().collection("chirag").doc(req.body.userID).set({data:req.params.id});
+  res.status(200).send(req.body.userID + " added");
+})
 
 
 app.post("/addSpace",async (req,res)=>{
@@ -241,6 +251,42 @@ app.post("/moveSpaceObject",async (req,res)=>{
    
 
 })
+app.post("/addPlayerToRoom",async (req,res)=>{
+
+  const playerID = req.body.playerID;
+  const roomID = req.body.roomID;
+  const uniqueID = playerID+roomID;
+ await admin.firestore().collection("players").doc(uniqueID).set({
+  playerID:playerID,
+  roomID:roomID,
+  uniqueID:uniqueID,
+  date:new Date()
+  }).then(()=>{
+    res.status(200).send(playerID+ " is added");
+  }).catch((err)=>{
+    res.status(500).send(err);
+  });
+})
+app.post("/removePlayerFromRoom",async (req,res)=>{
+
+  const playerID = req.body.playerID;
+  const roomID = req.body.roomID;
+  const uniqueID = playerID+roomID;
+ await admin.firestore().collection("players").doc(uniqueID).delete().then(()=>{
+    res.status(200).send(playerID+ " is removed");
+  }).catch((err)=>{
+    res.status(500).send(err);
+  });
+})
+app.post("/getPlayers",async (req,res)=>{
+
+  const roomID = req.body.roomID;
+ await admin.firestore().collection("players").where("roomID","==",roomID).get().then((resp)=>{
+    res.status(200).send(resp.size.toString());
+  }).catch((err)=>{
+    res.status(500).send(err);
+  });
+})
 app.get("/getSpaceFiles/:spaceID/:SpaceType",async (req,res)=>{
    const snapshot = await admin.firestore().collection("files").where("spaceID", "==" ,req.params.spaceID).get();
 
@@ -303,7 +349,7 @@ app.post('/addSpaceFiles', (req, res) => {
             .then(async(signedUrls ) => {
               const uid = uuidv4();
               const img_url = "https://firebasestorage.googleapis.com/v0/b/" + bucket.name + "/o/" + encodeURIComponent(signedUrls[0].name) + "?alt=media&token=" + uid;
-              await admin.firestore().collection("files").doc(uid).set({id:uid,name: formData.get('name'), postion: formData.get('position'),rotation: formData.get('rotation'),scale: formData.get('scale') ,url:img_url ,spaceID:formData.get('spaceId')});
+              await admin.firestore().collection("files").doc(uid).set({id:uid,name: formData.get('name'), postion: formData.get('position'),rotation: formData.get('rotation'),scale: formData.get('scale') ,url:img_url ,spaceID:formData.get('spaceId'),type:formData.get('type')});
 
               res.status(200).json({
                 message: "file added",
